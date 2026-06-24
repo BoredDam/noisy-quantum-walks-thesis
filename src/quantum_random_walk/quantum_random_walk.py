@@ -45,7 +45,8 @@ def noisy_circle_quantum_random_walk_1D(
     H = custom_H(odds)
     U = S @ np.kron(H, I)
 
-    np.random.seed(seed)
+    if seed != None:
+        np.random.seed(seed)
 
     match noise_type:
         case "X":
@@ -90,7 +91,8 @@ def noisy_meas_circle_quantum_random_walk_1D(
     H = custom_H(odds)
 
     U = S @ np.kron(H, I)
-    np.random.seed(seed)
+    if seed != None:
+        np.random.seed(seed)
 
     start = np.zeros((N, 1), dtype=complex)
     start[N // 2, 0] = 1.0
