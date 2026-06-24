@@ -60,7 +60,7 @@ def noisy_circle_quantum_random_walk_1D(
     noise_operator = np.kron(noise_mtx, I)
 
     start = np.full([N, 1], 0)
-    start[N // 2] = 1
+    start[N // 2 + 1] = 1
     vec = np.kron(coin_hilbert(symmetrical), start)
 
     data = []
@@ -95,7 +95,7 @@ def noisy_meas_circle_quantum_random_walk_1D(
         np.random.seed(seed)
 
     start = np.zeros((N, 1), dtype=complex)
-    start[N // 2, 0] = 1.0
+    start[N // 2 + 1] = 1.0
 
     vec = np.kron(coin_hilbert(symmetrical), start)
 
