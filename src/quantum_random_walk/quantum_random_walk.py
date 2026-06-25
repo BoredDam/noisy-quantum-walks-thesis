@@ -7,7 +7,7 @@ def circle_quantum_random_walk_1D(
         steps: int, 
         odds: float = 0.5, 
         symmetrical: bool = True
-        ):
+    ):
 
     N = 2*max_pos + 1
     I = np.identity(N)
@@ -26,7 +26,7 @@ def circle_quantum_random_walk_1D(
         vec = U @ vec
         data.append(prob_pos)
 
-    return data, np.array(range(-N//2, N//2))
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
 
 
 def noisy_circle_quantum_random_walk_1D(
@@ -60,7 +60,7 @@ def noisy_circle_quantum_random_walk_1D(
     noise_operator = np.kron(noise_mtx, I)
 
     start = np.full([N, 1], 0)
-    start[N // 2 + 1] = 1
+    start[N // 2] = 1
     vec = np.kron(coin_hilbert(symmetrical), start)
 
     data = []
@@ -73,7 +73,7 @@ def noisy_circle_quantum_random_walk_1D(
             vec = U @ vec
         data.append(prob_pos)
 
-    return data, np.array(range(-N//2, N//2))
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
 
 
 def noisy_meas_circle_quantum_random_walk_1D(
@@ -95,7 +95,7 @@ def noisy_meas_circle_quantum_random_walk_1D(
         np.random.seed(seed)
 
     start = np.zeros((N, 1), dtype=complex)
-    start[N // 2 + 1] = 1.0
+    start[N // 2] = 1.0
 
     vec = np.kron(coin_hilbert(symmetrical), start)
 
@@ -131,4 +131,4 @@ def noisy_meas_circle_quantum_random_walk_1D(
 
         data.append(prob_pos)
 
-    return data, np.array(range(-N//2, N//2))
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
