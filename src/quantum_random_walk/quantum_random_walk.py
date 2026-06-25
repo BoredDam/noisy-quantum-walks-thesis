@@ -20,7 +20,7 @@ def circle_quantum_random_walk_1D(
     vec = np.kron(coin_hilbert(symmetrical), start)
 
     data = []
-    for _ in range(steps):
+    for _ in range(steps + 1):
         current_vec = vec.reshape(2, N)
         prob_pos = np.sum((np.abs(current_vec)) ** 2, axis=0)
         vec = U @ vec
@@ -64,7 +64,7 @@ def noisy_circle_quantum_random_walk_1D(
     vec = np.kron(coin_hilbert(symmetrical), start)
 
     data = []
-    for _ in range(steps):
+    for _ in range(steps + 1):
         current_vec = vec.reshape(2, N)
         prob_pos = np.sum((np.abs(current_vec)) ** 2, axis=0)
         if np.random.rand() <= noise_odds:
