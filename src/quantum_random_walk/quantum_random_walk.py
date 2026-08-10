@@ -113,22 +113,22 @@ def noisy_meas_circle_quantum_random_walk_1D(
 
     data = []
 
-    for _ in range(steps):
+    for _ in range(steps + 1):
 
-
-        rho = U @ rho @ U.conj().T
-
-        if np.random.rand() <= meas_odds:
-            rho = P0 @ rho @ P0 + P1 @ rho @ P1
-        
         prob_pos = np.zeros(N)
-
+        
         for x in range(N):
             prob_pos[x] = (
                 rho[x, x].real +
                 rho[N + x, N + x].real
             )
-
+        
         data.append(prob_pos)
+        rho = U @ rho @ U.conj().T
+
+        if np.random.rand() <= meas_odds:
+            rho = P0 @ rho @ P0 + P1 @ rho @ P1
+        
+        
 
     return data, np.array(range(-N//2 + 1, N//2 + 1))
