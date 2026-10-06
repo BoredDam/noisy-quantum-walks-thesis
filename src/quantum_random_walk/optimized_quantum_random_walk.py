@@ -1,0 +1,134 @@
+import numpy as np
+from scipy import sparse
+from src.quantum_random_walk.quantum_utils import X, Y, Z, H, custom_H, _S_circle, coin_hilbert
+from functools import lru_cache
+
+
+@lru_cache(maxsize=4)
+def get_U(N, odds):
+    I = sparse.eye(N, format="csr")
+    S = _S_circle(N)
+    H = custom_H(odds)
+    return S @ sparse.kron(H, I, format="csr")
+
+
+def circle_quantum_random_walk_1D(
+        max_pos: int,
+        steps: int,
+        odds: float = 0.5,
+        symmetrical: bool = True
+    ):
+
+    N = 2*max_pos + 1
+    I = sparse.eye(N, format="csr")
+    S = _S_circle(N)
+    H = custom_H(odds)
+    U = S @ sparse.kron(H, I, format="csr")
+
+    start = np.full([N, 1], 0)
+    start[N // 2] = 1
+    vec = np.kron(coin_hilbert(symmetrical), start)
+
+    data = []
+    for _ in range(steps + 1):
+        current_vec = vec.reshape(2, N)
+        prob_pos = np.sum((np.abs(current_vec)) ** 2, axis=0)
+        vec = U @ vec
+        data.append(prob_pos)
+
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
+
+
+def noisy_circle_quantum_random_walk_1D(
+        max_pos: int,
+        steps: int,
+        odds: float = 0.5,
+        symmetrical: bool = True,
+        noise_type: str = None,
+        noise_odds: float = 0.02,
+        seed: int = None
+    ):
+
+    N = 2*max_pos + 1
+    I = sparse.eye(N, format="csr")
+    U = get_U(N, odds)
+
+    if seed != None:
+        np.random.seed(seed)
+
+    match noise_type:
+        case "X":
+            noise_mtx = np.array([[0, 1], [1, 0]])
+        case "Z":
+            noise_mtx = np.array([[1, 0], [0, -1]])
+        case "H":
+            noise_mtx = np.array([[1 / np.sqrt(2), 1 / np.sqrt(2)], [1 / np.sqrt(2), -1 / np.sqrt(2)]])
+        case None:
+            noise_mtx = np.identity(2)
+    noise_operator = sparse.kron(noise_mtx, I, format="csr")
+
+    start = np.full([N, 1], 0)
+    start[N // 2] = 1
+    vec = np.kron(coin_hilbert(symmetrical), start)
+
+    data = []
+    for _ in range(steps + 1):
+        current_vec = vec.reshape(2, N)
+        prob_pos = np.sum((np.abs(current_vec)) ** 2, axis=0)
+        if np.random.rand() <= noise_odds:
+            vec = noise_operator @ U @ vec
+        else:
+            vec = U @ vec
+        data.append(prob_pos)
+
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
+
+
+def noisy_meas_circle_quantum_random_walk_1D(
+        max_pos: int,
+        steps: int,
+        odds: float = 0.5,
+        symmetrical: bool = True,
+        meas_odds: float = 0.02,
+        seed: int = None
+    ):
+
+    N = 2*max_pos + 1
+    I = sparse.eye(N, format="csr")
+    U = get_U(N, odds)
+
+    if seed != None:
+        np.random.seed(seed)
+
+    start = np.zeros((N, 1), dtype=complex)
+    start[N // 2] = 1.0
+
+    vec = np.kron(coin_hilbert(symmetrical), start)
+
+    rho = vec @ vec.conj().T
+
+    P0_coin = np.array([[1, 0],
+                        [0, 0]], dtype=complex)
+
+    P1_coin = np.array([[0, 0],
+                        [0, 1]], dtype=complex)
+
+    P0 = sparse.kron(P0_coin, I, format="csr")
+    P1 = sparse.kron(P1_coin, I, format="csr")
+
+    data = []
+
+    for _ in range(steps + 1):
+
+        diag = rho.diagonal().real
+        prob_pos = diag[:N] + diag[N:]
+
+        data.append(prob_pos)
+        rho = U @ rho
+        rho = (U @ rho.T).T
+
+        if np.random.rand() <= meas_odds:
+            rho[:N, N:] = 0
+            rho[N:, :N] = 0
+            
+    return data, np.array(range(-N//2 + 1, N//2 + 1))
