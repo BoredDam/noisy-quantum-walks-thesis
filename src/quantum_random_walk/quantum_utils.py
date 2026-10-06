@@ -1,5 +1,5 @@
 import numpy as np
-
+from scipy import sparse
 
 def H():
     H = [[1, 1], [1, -1]]
@@ -40,33 +40,22 @@ def coin_hilbert(symmetrical: bool = True):
         C = np.matmul(Y(), C)
     return C
 
-
 def _S_circle(N: int):
     """
     builds the matrix for the shift operator S
     of the given size `N` for the random walk on the circle
     """
+    i = np.arange(N)
 
-    A = np.zeros([N, N])
-    B = np.zeros([N, N])
+    indices = np.concatenate((
+        (i - 1) % N,
+        N + (i + 1) % N
+    ))
 
-    for i in range(N):
-        a1 = np.full([N, 1], 0)
-        a2 = np.full([1, N], 0)
+    indptr = np.arange(2*N + 1)
+    data = np.ones(2*N)
 
-        a1[(i + 1) % N] = 1
-        a2[0][i] = 1
-        A += a1 @ a2
-
-    for i in range(N):
-        b1 = np.full([N, 1], 0)
-        b2 = np.full([1, N], 0)
-        b1[i - 1 % N][0] = 1
-        b2[0][i] = 1
-        B += b1 @ b2
-
-    c = np.array([[1, 0], [0, 0]])
-    d = np.array([[0, 0], [0, 1]])
-
-    S = np.kron(c, A) + np.kron(d, B)
-    return S
+    return sparse.csr_matrix(
+        (data, indices, indptr),
+        shape=(2*N, 2*N)
+    )
