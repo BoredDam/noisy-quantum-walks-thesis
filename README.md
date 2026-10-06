@@ -10,3 +10,9 @@ with this project I provide an analysis of the quantum random walk's probability
 ![walks](images/var-kurt-noisy-H.png)
 ![walks](images/var-kurt-noisy-X.png)
 ![walks](images/var-kurt-noisy-Z.png)
+
+## script to run some benchmarks
+
+```
+python3 -m scripts.run
+```
