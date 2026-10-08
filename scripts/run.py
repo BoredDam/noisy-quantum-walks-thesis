@@ -8,17 +8,18 @@ import os
 # PARAMETERS
 
 SEED = 42                       # seed for the random number generation
-start = 10                    # smallest amount of steps of the QRWs
-stop = 100                     # biggest amount of steps of the QRWs
+start = 10                      # smallest amount of steps of the QRWs
+stop = 1000                     # biggest amount of steps of the QRWs
 skip = 10                       # how big is the skip in the step count
+p_amount = 100                  # count of p tested in [0, 1]
 IS_SYMMETRICAL = True           # must the QRW be symmetrical?
-noise_type = 'meas'             # noise type, in ['X', 'Z', 'H', 'meas']
-SAMPLE_COUNT = 50               # how many samples for each experiment (higher TIMES, more accurate values)
-PLOT = True                    # at the end of the simulation, plot the computed data
+noise_type = 'X'                # noise type, in ['X', 'Z', 'H', 'meas']
+SAMPLE_COUNT = 300              # how many samples for each experiment (higher TIMES, more accurate values)
+PLOT = True                     # at the end of the simulation, plot the computed data
 
 
 
-max_pos = stop + 1
+MAX_POS = stop + 1
 
 def var_mu0(X, Y):
     '''
@@ -28,10 +29,25 @@ def var_mu0(X, Y):
     Y_arr = np.asarray(Y)
     return np.sum(Y_arr * (X_arr ** 2))
 
+# 
+print(f'''
+this is a noisy quantum random walk monte carlo simulation, used to
+evaluate alpha, the diffusion exponent that describes the regime 
+of a diffusive process, in the context of a noisy channel. 
+alpha will be evalued in respect to p, the noise probability 
+associated to the quantum channel.
 
+noise type   = {noise_type}
+sample count = {SAMPLE_COUNT}
+p amount     = {p_amount}
+seed         = {SEED}
+start        = {start}
+stop         = {stop}
+skip         = {skip}
+symmetrical  = {IS_SYMMETRICAL}
+plot         = {PLOT}''')
 
 # creates the directory
-
 directory_name = f"./data/diffusion_alpha_steps_({start},{stop},{skip})"
 try:
     os.mkdir(directory_name)
@@ -54,7 +70,7 @@ P = []
 
 np.random.seed(SEED)
 
-for p in np.linspace(0, 1, 75):
+for p in np.linspace(0, 1, p_amount):
 
     p = round(p, 2)
     var_ft = []
@@ -62,14 +78,14 @@ for p in np.linspace(0, 1, 75):
     sum_data = None
 
     for count in range(SAMPLE_COUNT):
-        print(count)
+        #print(count)
         if noise_type not in ['X', 'Z', 'H', 'meas']:
             print(f"{noise_type} is not a valid noise type.")
             exit(1)
 
         if noise_type in ['X', 'Z', 'H']:
             data, X = noisy_circle_quantum_random_walk_1D(
-                max_pos,
+                MAX_POS,
                 stop,
                 0.5,
                 IS_SYMMETRICAL,
@@ -80,7 +96,7 @@ for p in np.linspace(0, 1, 75):
 
         if noise_type == 'meas':
             data, X = noisy_meas_circle_quantum_random_walk_1D(
-                max_pos,
+                MAX_POS,
                 stop,
                 0.5,
                 IS_SYMMETRICAL,
@@ -128,7 +144,14 @@ with open(f"{directory_name}/{noise_type}.csv", "w", newline="") as csvfile:
     csvwriter.writerow(ALPHAS)
 
 if PLOT:
+    noise_title_dict = {
+        'meas' : 'generalized dephasing',
+        'H'    : 'Hadamard',
+        'X'    : 'X-dephasing (bit-flip)',
+        'Z'    : 'Z-dephasing (phase-flip)'
+    }
     plt.plot(P, ALPHAS)
+    plt.title(f'QRW diffusion exponent in a noisy channel,\nnoise type: {noise_title_dict[noise_type]}')
     plt.xlabel(r"$p$")
     plt.ylabel(r"$\alpha$")
     plt.grid()
