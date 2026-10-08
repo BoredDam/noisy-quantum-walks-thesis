@@ -3,6 +3,18 @@ from scipy import sparse
 from src.quantum_random_walk.quantum_utils import X, Y, Z, H, custom_H, _S_circle, coin_hilbert
 from functools import lru_cache
 
+"""
+This is an optimized version of the noisy quantum random walk code,
+implemented using scipy.sparse, a module that lets you work optimally with sparse arrays.
+
+When we work with big ranges for the quantum random walk, 
+matrices of the walker Hilbert space tend to have a lot of zero values, so they can be
+optimized using sparse array representations.
+
+I also implemented a caching mechanism on the creation of the U operator
+(Hadamard + shift operator on the whole system), that will help obtaining
+faster times on iterated experiments.
+"""
 
 @lru_cache(maxsize=4)
 def get_U(N, odds):
@@ -21,9 +33,7 @@ def circle_quantum_random_walk_1D(
 
     N = 2*max_pos + 1
     I = sparse.eye(N, format="csr")
-    S = _S_circle(N)
-    H = custom_H(odds)
-    U = S @ sparse.kron(H, I, format="csr")
+    U = get_U(N, odds)
 
     start = np.full([N, 1], 0)
     start[N // 2] = 1
